@@ -1,0 +1,9 @@
+BattleShip is a two player board game. This game contains one board (10x10 blocks) for each player.
+The boards represents the ocean and we have to place our ships in the ocean without showing it to other player. 
+
+After placing the ships both players hit the blocks on opponent's board in alternate moves. When a player hit a block which contains the ship then it will be a hit and he will one more chance to hit the board.
+
+
+The player who will first destroy all the ships of other player, will be the winner.
+
+Now in this program one player is computer and it will use the AI to play it's move.
