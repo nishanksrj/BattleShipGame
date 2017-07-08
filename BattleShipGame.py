@@ -2,18 +2,81 @@ import pygame,time
 from pygame.locals import *
 from sys import exit
 from random import *
+from __main__ import *
 pygame.init()
 dim=(40,40)
-screen=pygame.display.set_mode((1200,600),0,32)
-ship_image=pygame.transform.scale(pygame.image.load('images/ship.png'),dim)
-water=pygame.transform.scale(pygame.image.load('images/water.png'),dim)
-unknown=pygame.transform.scale(pygame.image.load('images/unknown.png'),dim)
-shot=pygame.transform.scale(pygame.image.load('images/shot.png'),dim)
+Player=key
+
+ship_image=pygame.transform.scale(pygame.image.load('images\\ship.png'),dim)
+water=pygame.transform.scale(pygame.image.load('images\\water.png'),dim)
+unknown=pygame.transform.scale(pygame.image.load('images\\unknown.png'),dim)
+shot=pygame.transform.scale(pygame.image.load('images\\shot.png'),dim)
+mouse=pygame.transform.scale(pygame.image.load('images\\Cursor2.png'),(40,40))
 class ship():
     def __init__(self,name,length):
         self.name=name;
         self.length=length;
         self.length_temp=length
+        ship.orientation=-1
+prob=[]
+hboard1=[]
+hboard2=[]
+board1=[]
+board2=[]
+for i in range(10):
+    prob.append([0,0,0,0,0,0,0,0,0,0])
+for i in range(10):
+    hboard1.append([])
+    for j in range(10):
+        hboard1[i].append('blue')
+for i in range(10):
+    hboard2.append([])
+    for j in range(10):
+        hboard2[i].append('blue')
+for i in range(10):
+    board1.append([])
+    for j in range(10):
+        board1[i].append('blue')
+for i in range(10):
+    board2.append([])
+    for j in range(10):
+        board2[i].append('blue')
+size=FULLSCREEN
+screen=pygame.display.set_mode((1366,768),FULLSCREEN,32)
+font=pygame.font.SysFont('Algerian',64)
+smallfont=pygame.font.SysFont('Algerian',32)
+text=''
+position1=(220,200)
+position2=(700,200)
+board_size=400
+text_pos=(200,650)
+placed_player1=0
+AIRCRAFT_CARRIER=ship('Aircraft Carrier',5)
+BATTLESHIP=ship('Battleship',4)
+SUBMARINE=ship('Submarine',3)
+CRUSIER=ship('Cruiser',3)
+DESTROYER=ship('Destroyer',2)
+CAIRCRAFT_CARRIER=ship('Aircraft Carrier',5)
+CBATTLESHIP=ship('Battleship',4)
+CSUBMARINE=ship('Submarine',3)
+CCRUSIER=ship('Cruiser',3)
+CDESTROYER=ship('Destroyer',2)
+player1_ships=[AIRCRAFT_CARRIER,BATTLESHIP,SUBMARINE,CRUSIER,DESTROYER]
+both_placed=0
+ship_number=1
+first=0
+placed_player2=0
+player2_ships=[CAIRCRAFT_CARRIER,CBATTLESHIP,CSUBMARINE,CCRUSIER,CDESTROYER]
+move=1
+flag=0
+player1=5
+player2=5
+diff=0
+hit_flag=1
+hit_ships=[]
+pygame.mouse.set_visible(False);
+position=pygame.mouse.get_pos()
+screen.blit(mouse,position)
 def no_cross(ship,board):
     count=0
     if ship.state=='HORIZONTAL':
@@ -108,6 +171,72 @@ def calculate(board,prob,ships):
                     prob[i][j]=check(board,i,j,ships)
             elif board[i][j]=='green' or board[i][j]=='sunk' or board[i][j]=='H':
                 prob[i][j]=0
+def hit_the_board(i,j,hit_ship,player1):
+    if hboard1[i][j]=='blue':
+        board1[i][j]='green'
+        hboard1[i][j]='green'
+        move=1
+        if hit_ship.orientation==1:  #reverses the direction 
+            if hit_ship.direction=='L':
+                hit_ship.direction='R'
+            else:
+                hit_ship.direction='L'
+        else:
+            if hit_ship.direction=='U':
+                hit_ship.direction='D'
+            else:
+                hit_ship.direction='U'
+        hit_ship.last=hit_ship.origin
+    if hboard1[i][j]=='sunk' or hboard1[i][j]=='H' or hboard1[i][j]=='green':
+        if hit_ship.orientation==1:  #reverses the direction 
+            if hit_ship.direction=='L':
+                hit_ship.direction='R'
+            else:
+                hit_ship.direction='L'
+        else:
+            if hit_ship.direction=='U':
+                hit_ship.direction='D'
+            else:
+                hit_ship.direction='U'
+        hit_ship.last=hit_ship.origin
+    elif hboard1[i][j]==hit_ship.name[0]:
+        hboard1[i][j]='H'
+        board1[i][j]='H'
+        hit_ship.last=(i,j)
+        if hit_ship.length>0:
+            hit_ship.length-=1
+        if hit_ship.length==0:
+            for i in range(hit_ship.length_temp):
+                if hit_ship.state=='HORIZONTAL':
+                    board1[hit_ship.ver[1]+i][hit_ship.ver[0]]='sunk'
+                    hboard1[hit_ship.ver[1]+i][hit_ship.ver[0]]='sunk'
+                else:
+                    board1[hit_ship.ver[1]][hit_ship.ver[0]+i]='sunk'
+                    hboard1[hit_ship.ver[1]][hit_ship.ver[0]+i]='sunk'
+            screen.blit(smallfont.render(Player+'\'s '+hit_ship.name+' has been sunk.',True,(255,0,0)),(300,700))
+            player1-=1
+            player1_ships.remove(hit_ship)
+            hit_ships.remove(hit_ship)
+            display(board1,position1)
+            pygame.display.update()
+            time.sleep(1)
+    else:
+        if hboard1[i][j]=='A':
+            hit_ship=AIRCRAFT_CARRIER
+        elif hboard1[i][j]=='B':
+            hit_ship=BATTLESHIP
+        elif hboard1[i][j]=='S':
+            hit_ship=SUBMARINE
+        elif hboard1[i][j]=='C':
+            hit_ship=CRUSIER
+        elif hboard1[i][j]=='D':
+            hit_ship=DESTROYER
+        hboard1[i][j]='H'
+        board1[i][j]='H'
+        hit_ships.append(hit_ship)
+        hit_ship.origin=(i,j)
+        hit_ship.length-=1
+    return player1
 def draw(color,x,y):
     if color=='A' or color=='S' or color=='D' or color=='B' or color=='C' or color=='D' or color=='sunk':
         screen.blit(ship_image,(x,y))
@@ -124,79 +253,31 @@ def display(board,position):
     for j in range(11):
         pygame.draw.line(screen,(0,0,0),(position[0],j*40+position[1]),(position[0]+400,j*40+position[1]),5)
         pygame.draw.line(screen,(0,0,0),(position[0]+(j)*40,position[1]),(position[0]+(j)*40,position[1]+board_size),5)    
-prob=[]
-hboard1=[]
-hboard2=[]
-board1=[]
-board2=[]
-for i in range(10):
-    prob.append([0,0,0,0,0,0,0,0,0,0])
-for i in range(10):
-    hboard1.append([])
-    for j in range(10):
-        hboard1[i].append('blue')
-for i in range(10):
-    hboard2.append([])
-    for j in range(10):
-        hboard2[i].append('blue')
-for i in range(10):
-    board1.append([])
-    for j in range(10):
-        board1[i].append('blue')
-for i in range(10):
-    board2.append([])
-    for j in range(10):
-        board2[i].append('blue')
-size=RESIZABLE
-screen=pygame.display.set_mode((1200,600),size,32)
-font=pygame.font.SysFont('Algerian',64)
-smallfont=pygame.font.SysFont('Algerian',32)
-text=''
-position1=(220,200)
-position2=(700,200)
-board_size=400
-text_pos=(200,650)
-placed_player1=0
-AIRCRAFT_CARRIER=ship('Aircraft Carrier',5)
-BATTLESHIP=ship('Battleship',4)
-SUBMARINE=ship('Submarine',3)
-CRUSIER=ship('Cruiser',3)
-DESTROYER=ship('Destroyer',2)
-CAIRCRAFT_CARRIER=ship('Aircraft Carrier',5)
-CBATTLESHIP=ship('Battleship',4)
-CSUBMARINE=ship('Submarine',3)
-CCRUSIER=ship('Cruiser',3)
-CDESTROYER=ship('Destroyer',2)
-player1_ships=[AIRCRAFT_CARRIER,BATTLESHIP,SUBMARINE,CRUSIER,DESTROYER]
-both_placed=0
-ship_number=1
-first=0
-placed_player2=0
-player2_ships=[CAIRCRAFT_CARRIER,CBATTLESHIP,CSUBMARINE,CCRUSIER,CDESTROYER]
-move=1
-flag=0
-player1=5
-player2=5
-diff=0
 while True:
     screen.fill((0,0,0))
     screen.blit(font.render('BATTLESHIPS',True,(255,0,0)),(420,20))
+    pygame.draw.rect(screen,(0,0,255),(1200,500,120,50))
+    screen.blit(smallfont.render('Help',True,(255,255,255)),(1205,505))
+    pygame.draw.rect(screen,(0,0,255),(1200,600,120,50))
+    screen.blit(smallfont.render('Exit',True,(255,255,255)),(1205,600))
     if player1==0:
         screen.blit(font.render('Player 2 won the war.',True,(255,0,0)),(350,300))
+        message='Player 2 won the war.'
         pygame.display.update()
         break
     elif player2==0:
-        screen.blit(font.render('Player 1 won the war.',True,(255,0,0)),(350,300))
+        screen.blit(font.render(Player+' won the war.',True,(255,0,0)),(350,300))
+        message=Player+' won the war.'
         pygame.display.update()
         break
     if flag==0:
         if not placed_player1:
-            screen.blit(smallfont.render('Player 1: Place your '+player1_ships[ship_number-1].name,True,(255,0,0)),(300,120))
+            screen.blit(smallfont.render(Player+': Place your '+player1_ships[ship_number-1].name,True,(255,0,0)),(300,120))
         elif not placed_player2:
             screen.blit(smallfont.render('Player 2: Place your '+player1_ships[ship_number-1].name,True,(255,0,0)),(300,120))
         elif both_placed:
             if move==1:
-                screen.blit(smallfont.render('Player 1: Your move.',True,(255,0,0)),(300,120))
+                screen.blit(smallfont.render(Player+': Your move.',True,(255,0,0)),(300,120))
                 pygame.draw.rect(screen,(255,255,255),(position2[0]-10,position2[1]-10,board_size+20,board_size+20))
                 diff=0
             elif move==2:
@@ -208,16 +289,15 @@ while True:
         if both_placed:
             display(board1,position1)
             display(board2,position2)
-        screen.blit(font.render('Player 1',True,(255,0,0)),(position1[0]+30,position1[1]+board_size+10))
-        screen.blit(font.render('Player 2',True,(255,0,0)),(position2[0]+30,position2[1]+board_size+10))
+        screen.blit(smallfont.render(Player,True,(255,0,0)),(position1[0]+30,position1[1]+board_size+10))
+        screen.blit(smallfont.render('Player 2',True,(255,0,0)),(position2[0]+30,position2[1]+board_size+10))
     elif flag==1:
         screen.blit(smallfont.render('1. This game is based on a game called Battleships.',True,(255,0,0)),(50,100))
         screen.blit(smallfont.render('2. you have to place your ships without showing it to your opponent.',True,(255,0,0)),(50,100+smallfont.get_linesize()))
         screen.blit(smallfont.render('3. You can place your ships by clicking the buttons on the mouse.',True,(255,0,0)),(50,100+2*smallfont.get_linesize()))       
+        screen.blit(smallfont.render('4. Press Enter to exit or Tab to resize the window or H for Help.',True,(255,0,0)),(50,100+3*smallfont.get_linesize()))
+
     for event in pygame.event.get():
-        if event.type==quit:
-            pygame.display.quit()
-            exit()
         if event.type==KEYDOWN:
             if event.key==K_RETURN:
                 pygame.display.quit()
@@ -233,6 +313,14 @@ while True:
             elif event.key==K_h and flag==1:
                 flag=0            
         if event.type==MOUSEBUTTONDOWN:
+            if position[0]>=1200 and position[0]<=1320 and position[1]>=500 and position[1]<=550:
+                if flag==1:
+                    flag=0
+                else:
+                    flag=1
+            if position[0]>=1200 and position[0]<=1320 and position[1]>=600 and position[1]<=650:
+                pygame.quit()
+                exit()
             if not placed_player1:
                 ship=player1_ships[ship_number-1]
                 x,y=pygame.mouse.get_pos()
@@ -258,7 +346,7 @@ while True:
                     elif ship_number==5:
                         display(hboard1,position1)
                         pygame.draw.rect(screen,(0,0,0),(300,120,600,smallfont.get_linesize()))
-                        screen.blit(smallfont.render('Player 1: your ships have been placed',True,(255,0,0)),(300,120))
+                        screen.blit(smallfont.render(Player+': your ships have been placed',True,(255,0,0)),(300,120))
                         pygame.display.update()
                         time.sleep(0.5)
                         pygame.draw.rect(screen,(0,0,0),(300,120,700,smallfont.get_linesize()))
@@ -308,6 +396,8 @@ while True:
                                         display(board2,position2)
                                         pygame.display.update()
                                         time.sleep(1)
+    if event.type==MOUSEMOTION:
+            position=pygame.mouse.get_pos();
     if placed_player1 and not placed_player2: 
         ship=player2_ships[ship_number-1]
         i=randint(0,9)
@@ -331,55 +421,133 @@ while True:
                 placed_player2=1;
                 both_placed=1
     if diff==1:
-        lst=[]
-        maximum=0
-        for i in range(10):
-            for j in range(10):
-                if prob[i][j]>maximum:
-                    maximum=prob[i][j]
-                    lst=[(i,j)]
-                elif prob[i][j]==maximum:
-                    lst.append((i,j))
-        (i,j)=choice(lst)
-        if hboard1[i][j]=='blue':
-            board1[i][j]='green'
-            hboard1[i][j]='green'
-            move=1
-            continue
-        elif hboard1[i][j]=='A':
-            ship=AIRCRAFT_CARRIER
-        elif hboard1[i][j]=='B':
-            ship=BATTLESHIP
-        elif hboard1[i][j]=='S':
-            ship=SUBMARINE
-        elif hboard1[i][j]=='C':
-            ship=CRUSIER
-        elif hboard1[i][j]=='D':
-            ship=DESTROYER
-        if hboard1[i][j]!='blue' and hboard1[i][j]!='green' and hboard1[i][j]!='H' and hboard1[i][j]!='sunk':
-            board1[i][j]='H'
+        calculate(board1,prob,player1_ships)
+        if len(hit_ships)==0:
+            lst=[]
+            maximum=0
+            for i in range(10):
+                for j in range(10):
+                    if prob[i][j]>maximum:
+                        maximum=prob[i][j]
+                        lst=[(i,j)]
+                    elif prob[i][j]==maximum:
+                        lst.append((i,j))
+            (i,j)=choice(lst)
+            if hboard1[i][j]=='blue':
+                board1[i][j]='green'
+                hboard1[i][j]='green'
+                move=1
+                continue
+            if board1[i][j]=='sunk' or board1[i][j]=='H' or board1[i][j]=='green':
+                continue;
+            elif hboard1[i][j]=='A':
+                hit_ship=AIRCRAFT_CARRIER
+            elif hboard1[i][j]=='B':
+                hit_ship=BATTLESHIP
+            elif hboard1[i][j]=='S':
+                hit_ship=SUBMARINE
+            elif hboard1[i][j]=='C':
+                hit_ship=CRUSIER
+            elif hboard1[i][j]=='D':
+                hit_ship=DESTROYER
+            hit_ships.append(hit_ship)
+            hit_ship.origin=(i,j)
+            hit_ship.length-=1
             hboard1[i][j]='H'
-            if ship.length>0:
-                ship.length-=1
-            if ship.length==0:
-                for i in range(ship.length_temp):
-                    if ship.state=='HORIZONTAL':
-                        board1[ship.ver[1]+i][ship.ver[0]]='sunk'
-                        hboard1[ship.ver[1]+i][ship.ver[0]]='sunk'
+            board1[i][j]='H'
+            hit_flag=False
+        else:
+            hit_ship=hit_ships[0]
+            if hit_ship.orientation==-1:  #only one unit of ship has been hit
+                i,j=hit_ship.origin
+                neighbour=[]
+                if j+1<=9 and board1[i][j+1]=='blue':  #currently it is selecting a neighbour without checking prob
+                    neighbour.append((i,j+1))
+                if j-1>=0 and board1[i][j-1]=='blue':
+                    neighbour.append((i,j-1))
+                if i-1>=0 and board1[i-1][j]=='blue':
+                    neighbour.append((i-1,j))
+                if i+1<=9 and board1[i+1][j]=='blue':
+                    neighbour.append((i+1,j))
+                i,j=choice(neighbour)
+                if hit_ship.name[0]==hboard1[i][j]:
+                    hit_ship.last=(i,j)
+                    hit_ship.length-=1
+                    if i+1==hit_ship.origin[0]:
+                        hit_ship.orientation=2
+                        hit_ship.direction='U'
+                    elif i-1==hit_ship.origin[0]:
+                        hit_ship.orientation=2
+                        hit_ship.direction='D'
+                    elif j+1==hit_ship.origin[1]:
+                        hit_ship.orientation=1
+                        hit_ship.direction='L'
+                    elif j-1==hit_ship.origin[1]:
+                        hit_ship.orientation=1
+                        hit_ship.direction='R'
+                    hboard1[i][j]='H'
+                    board1[i][j]='H'
+                    if hit_ship.length==0:
+                        for i in range(hit_ship.length_temp):
+                            if hit_ship.state=='HORIZONTAL':
+                                board1[hit_ship.ver[1]+i][hit_ship.ver[0]]='sunk'
+                                hboard1[hit_ship.ver[1]+i][hit_ship.ver[0]]='sunk'
+                            else:
+                                board1[hit_ship.ver[1]][hit_ship.ver[0]+i]='sunk'
+                                hboard1[hit_ship.ver[1]][hit_ship.ver[0]+i]='sunk'
+                        screen.blit(smallfont.render(Player+'\'s '+hit_ship.name+' has been sunk.',True,(255,0,0)),(300,700))
+                        player1-=1
+                        player1_ships.remove(hit_ship)
+                        hit_ships.remove(hit_ship)
+                elif hboard1[i][j]=='A' or hboard1[i][j]=='B' or hboard1[i][j]=='C' or hboard1[i][j]=='S' or hboard1[i][j]=='D':
+                    if hboard1[i][j]=='A':
+                        hit_ship=AIRCRAFT_CARRIER
+                    if hboard1[i][j]=='B':
+                        hit_ship=BATTLESHIP
+                    if hboard1[i][j]=='S':
+                        hit_ship=SUBMARINE
+                    if hboard1[i][j]=='C':
+                        hit_ship=CRUSIER
+                    if hboard1[i][j]=='D':
+                        hit_ship=DESTROYER
+                    hboard1[i][j]='H'
+                    board1[i][j]='H'
+                    hit_ships.append(hit_ship)
+                    hit_ship.length-=1
+                    hit_ship.origin=(i,j)
+            else:
+                if hit_ship.orientation==1:    #horizontal
+                    if hit_ship.direction=='L':
+                        player1=hit_the_board(hit_ship.last[0],hit_ship.last[1]-1,hit_ship,player1)
                     else:
-                        board1[ship.ver[1]][ship.ver[0]+i]='sunk'
-                        hboard1[ship.ver[1]][ship.ver[0]+i]='sunk'
-                screen.blit(smallfont.render('Your\'s '+ship.name+' has been sunk.',True,(255,0,0)),(300,700))
-                player1-=1
-                player1_ships.remove(ship)
-                display(board1,position1)
-                pygame.display.update()
-                time.sleep(1)
+                        player1=hit_the_board(hit_ship.last[0],hit_ship.last[1]+1,hit_ship,player1)
+                else:               #vertical
+                    if hit_ship.direction=='U':
+                        player1=hit_the_board(hit_ship.last[0]-1,hit_ship.last[1],hit_ship,player1)
+                    else:
+                        player1=hit_the_board(hit_ship.last[0]+1,hit_ship.last[1],hit_ship,player1)
+    screen.blit(mouse,position)
     calculate(board1,prob,player1_ships)
     pygame.display.update()
 while True:
+    screen.fill((0,0,0))
+    screen.blit(font.render(message,True,(255,0,0)),(350,300))
+    pygame.mouse.set_visible(True)
+    pygame.draw.rect(screen,(0,0,255),(1200,600,120,50))
+    screen.blit(smallfont.render('Exit',True,(255,255,255)),(1205,600))
     for event in pygame.event.get():
+        if event.type==MOUSEMOTION:
+            position=pygame.mouse.get_pos()
+        if event.type==MOUSEBUTTONDOWN:
+            position=pygame.mouse.get_pos()
+            if position[0]>=1200 and position[0]<=1320 and position[1]>=600 and position[1]<=750:
+                pygame.quit()
+                exit()
         if event.type==KEYDOWN:
             if event.key==K_SPACE:
                 pygame.display.set_mode((1366,768),RESIZABLE,32)
+            if event.key==K_RETURN:
+                pygame.quit()
+                exit()
+    pygame.display.update()
             
